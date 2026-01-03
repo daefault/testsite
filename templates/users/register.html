@@ -1,0 +1,145 @@
+<!-- templates/users/register.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Регистрация - Кинотеатр "Экран"{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">🎬</div>
+            <h1 class="auth-title">Регистрация</h1>
+            <p class="auth-subtitle">Создайте аккаунт для покупки билетов</p>
+        </div>
+        
+        {% if form.errors %}
+        <div class="auth-error">
+            <p>Пожалуйста, исправьте ошибки:</p>
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field|title }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                    Имя пользователя
+                </label>
+                {{ form.username }}
+                {% if form.username.help_text %}
+                <small class="form-text text-muted">{{ form.username.help_text }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                    Email адрес
+                </label>
+                {{ form.email }}
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label">
+                            Пароль
+                        </label>
+                        {{ form.password1 }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label">
+                            Подтверждение пароля
+                        </label>
+                        {{ form.password2 }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                            Имя
+                        </label>
+                        {{ form.first_name }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                            Фамилия
+                        </label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.phone.id_for_label }}" class="form-label">
+                            Телефон
+                        </label>
+                        {{ form.phone }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
+                            Дата рождения
+                        </label>
+                        {{ form.date_of_birth }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="terms" required>
+                <label class="form-check-label" for="terms">
+                    Я согласен с <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">условиями использования</a>
+                </label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-submit">
+                Зарегистрироваться
+            </button>
+        </form>
+        
+        <div class="auth-links">
+            <p>Уже есть аккаунт? <a href="{% url 'users:login' %}">Войдите</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно с условиями -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Условия использования</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Текст условий использования сервиса...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

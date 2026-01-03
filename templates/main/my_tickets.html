@@ -1,0 +1,65 @@
+<!-- templates/cinema/my_tickets.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Мои билеты - Кинотеатр "Экран"{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Мои билеты</h1>
+
+{% if tickets %}
+<div class="row">
+    {% for ticket in tickets %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Билет #{{ ticket.id }}</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="card-title">{{ ticket.session.movie.name }}</h6>
+                
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Дата и время:</strong><br>
+                       {{ ticket.session.date_session }} {{ ticket.session.start_time|time:"H:i" }}
+                    </p>
+                    
+                    <p class="mb-1"><strong>Место:</strong><br>
+                       Зал {{ ticket.session.cinema_hall.id }}, 
+                       Ряд {{ ticket.seat.row }}, Место {{ ticket.seat.seat_in_row }}
+                    </p>
+                    
+                    <p class="mb-1"><strong>Цена:</strong><br>
+                       <span class="text-success fw-bold">{{ ticket.session.price }} ₽</span>
+                    </p>
+                    
+                    {% if ticket.buy_date %}
+                    <p class="mb-1"><strong>Дата покупки:</strong><br>
+                       {{ ticket.buy_date }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge {% if ticket.status %}bg-success{% else %}bg-warning{% endif %}">
+                        {% if ticket.status %}Использован{% else %}Активен{% endif %}
+                    </span>
+                    
+                    <a href="{% url 'main:ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary">
+                        Подробнее
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info text-center py-5">
+    <h4>У вас пока нет билетов</h4>
+    <p>Выберите сеанс и купите билеты</p>
+    <a href="{% url 'main:session_list' %}" class="btn btn-primary mt-3">
+        Посмотреть расписание
+    </a>
+</div>
+{% endif %}
+{% endblock %}

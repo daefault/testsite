@@ -1,0 +1,122 @@
+<!-- templates/cinema/movie_detail.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}{{ movie.name }} - Кинотеатр "Экран"{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Постер и основная информация -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <img src="{{ movie.poster_url }}" 
+                 class="card-img-top" 
+                 alt="{{ movie.name }}"
+                 onerror=this.src="{% static 'img/no_poster.jpg' %}">
+            
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h6>Длительность</h6>
+                        <p class="fw-bold">{{ movie.duration }} мин</p>
+                    </div>
+                    <div class="col-6">
+                        <h6>Возраст</h6>
+                        <p class="fw-bold">{{ movie.age_rating.age_rating }}</p>
+                    </div>
+                </div>
+                
+                {% if user.role == 'admin' %}
+                <div class="mt-3">
+                    <a href="{% url 'admin:cinema_movie_change' movie.id %}" 
+                       class="btn btn-warning btn-sm w-100">
+                        <i class="bi bi-pencil"></i> Редактировать
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Информация о фильме -->
+    <div class="col-md-8">
+        <h1 class="mb-3">{{ movie.name }}</h1>
+        
+        <div class="mb-4">
+            {% for genre in movie.genres.all %}
+                <span class="badge bg-primary me-1">{{ genre.genre }}</span>
+            {% endfor %}
+        </div>
+        
+        {% if movie.rating %}
+        <div class="mb-3">
+            <h5>Рейтинг: <span class="text-warning">★ {{ movie.rating }}/10</span></h5>
+        </div>
+        {% endif %}
+        
+        {% if movie.release_year %}
+        <div class="mb-3">
+            <h5>Год выпуска: {{ movie.release_year }}</h5>
+        </div>
+        {% endif %}
+        
+        {% if movie.description %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Описание</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ movie.description|linebreaks }}</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Ближайшие сеансы -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Ближайшие сеансы</h5>
+            </div>
+            <div class="card-body">
+                {% if sessions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Дата и время</th>
+                                    <th>Зал</th>
+                                    <th>Тип зала</th>
+                                    <th>Цена</th>
+                                    <th>Действие</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for session in sessions %}
+                                <tr>
+                                    <td>
+                                        {{ session.date_session }}<br>
+                                        <small class="text-muted">{{ session.start_time|time:"H:i" }}</small>
+                                    </td>
+                                    <td>{{ session.cinema_hall.id }}</td>
+                                    <td>{{ session.cinema_hall.hall_type.hall_type }}</td>
+                                    <td class="fw-bold text-success">{{ session.price }} ₽</td>
+                                    <td>
+                                        <a href="{% url 'main:session_detail' session.id %}" 
+                                           class="btn btn-sm btn-primary">
+                                            Выбрать места
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        На данный момент нет сеансов для этого фильма.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

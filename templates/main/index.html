@@ -1,0 +1,127 @@
+<!-- templates/cinema/index.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Главная - Кинотеатр "Экран"{% endblock %}
+
+{% block content %}
+<!-- Герой-секция -->
+<div class="hero-section mb-5 text-center text-white py-5 rounded" >
+    <h1 class="display-4 fw-bold">Добро пожаловать в кинотеатр "Экран"</h1>
+    <p class="lead">Лучшие фильмы в комфортных залах</p>
+    <a href="{% url 'main:session_list' %}" class="btn btn-primary btn-lg mt-3">
+        Посмотреть расписание
+    </a>
+</div>
+
+<!-- Сейчас в кино -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="mb-4 border-bottom pb-2">Сейчас в кино</h2>
+    </div>
+    
+    {% for movie in movies %}
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <img src="{{ movie.poster_url }}" 
+                 class="card-img-top movie-poster" 
+                 alt="{{ movie.name }}"
+                 onerror=this.src="{% static 'img/no_poster.jpg' %}">
+            <div class="card-body">
+                <h5 class="card-title">{{ movie.name|truncatechars:30 }}</h5>
+                <div class="mb-2">
+                    {% for genre in movie.genres.all|slice:":2" %}
+                        <span class="badge bg-secondary">{{ genre.genre }}</span>
+                    {% endfor %}
+                </div>
+                <p class="card-text">
+                    <small class="text-muted">
+                        {{ movie.duration }} мин • {{ movie.age_rating.age_rating }}
+                    </small>
+                </p>
+                <a href="{% url 'main:movie_detail' movie.id %}" class="btn btn-outline-primary btn-sm">
+                    Подробнее
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">Фильмы скоро появятся</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Ближайшие сеансы -->
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4 border-bottom pb-2">Ближайшие сеансы</h2>
+    </div>
+    
+    {% for session in upcoming_sessions %}
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-8">
+                        <h5 class="card-title">{{ session.movie.name }}</h5>
+                        <p class="card-text mb-1">
+                            <i class="bi bi-calendar"></i> {{ session.date_session }}
+                        </p>
+                        <p class="card-text mb-1">
+                            <i class="bi bi-clock"></i> {{ session.start_time|time:"H:i" }}
+                        </p>
+                        <p class="card-text">
+                            <i class="bi bi-geo-alt"></i> Зал {{ session.cinema_hall.id }}
+                        </p>
+                    </div>
+                    <div class="col-4 text-end">
+                        <h4 class="text-success">{{ session.price }} ₽</h4>
+                        <a href="{% url 'main:session_detail' session.id %}" class="btn btn-primary mt-2">
+                            Купить билет
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">Сеансов пока нет</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Статистика (только для админа) -->
+{% if user.role == 'admin' %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Статистика</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h3>{{ total_movies }}</h3>
+                        <p>Фильмов</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3>{{ total_sessions }}</h3>
+                        <p>Сеансов</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3>{{ total_tickets }}</h3>
+                        <p>Билетов продано</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3>{{ total_users }}</h3>
+                        <p>Пользователей</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

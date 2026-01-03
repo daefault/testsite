@@ -1,0 +1,167 @@
+<!-- templates/cinema/movie_list.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Фильмы - Кинотеатр "Экран"{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-8">
+        <h1>Все фильмы</h1>
+    </div>
+    <div class="col-4 text-end">
+        {% if user.role == 'admin' %}
+            <a href="{% url 'admin:cinema_movie_add' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Добавить фильм
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Жанр:</label>
+                <select name="genre" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все жанры</option>
+                    {% for genre in genres %}
+                        <option value="{{ genre.id }}" 
+                            {% if request.GET.genre == genre.id|stringformat:"s" %}selected{% endif %}>
+                            {{ genre.genre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Возрастной рейтинг:</label>
+                <select name="age_rating" class="form-select" onchange="this.form.submit()">
+                    <option value="">Все рейтинги</option>
+                    {% for rating in age_ratings %}
+                        <option value="{{ rating.id }}"
+                            {% if request.GET.age_rating == rating.id|stringformat:"s" %}selected{% endif %}>
+                            {{ rating.age_rating }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Сортировка:</label>
+                <select name="sort" class="form-select" onchange="this.form.submit()">
+                    <option value="name">По названию (А-Я)</option>
+                    <option value="-name" {% if request.GET.sort == '-name' %}selected{% endif %}>По названию (Я-А)</option>
+                    <option value="-rating" {% if request.GET.sort == '-rating' %}selected{% endif %}>По рейтингу</option>
+                    <option value="-release_year" {% if request.GET.sort == '-release_year' %}selected{% endif %}>По году (новые)</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список фильмов -->
+<div class="row">
+    {% for movie in movies %}
+    <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 shadow">
+            <div class="position-relative">
+                <img src="{{ movie.poster_url }}" 
+                     class="card-img-top movie-poster" 
+                     alt="{{ movie.name }}"
+                     onerror=this.src="{% static 'img/no_poster.jpg' %}">
+                
+                {% if movie.age_rating %}
+                <span class="position-absolute top-0 end-0 m-2 badge bg-dark">
+                    {{ movie.age_rating.age_rating }}
+                </span>
+                {% endif %}
+                
+                {% if movie.rating %}
+                <span class="position-absolute bottom-0 start-0 m-2 badge bg-warning text-dark">
+                    ★ {{ movie.rating }}
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="card-body">
+                <h5 class="card-title">{{ movie.name }}</h5>
+                
+                <div class="mb-2">
+                    {% for genre in movie.genres.all|slice:":3" %}
+                        <span class="badge bg-secondary">{{ genre.genre }}</span>
+                    {% endfor %}
+                </div>
+                
+                <p class="card-text small text-muted">
+                    {{ movie.duration }} мин • {{ movie.release_year|default:"-" }} год
+                </p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'main:movie_detail' movie.id %}" class="btn btn-primary btn-sm">
+                        Подробнее
+                    </a>
+                    
+                    {% if movie.sessions.exists %}
+                        <span class="badge bg-success">Есть сеансы</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-warning text-center py-5">
+            <h4>Фильмы не найдены</h4>
+            <p>Попробуйте изменить параметры поиска</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Пагинация -->
+{% if is_paginated %}
+<nav aria-label="Навигация по страницам">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Первая
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Назад
+                </a>
+            </li>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        {{ num }}
+                    </a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Вперёд
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Последняя
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

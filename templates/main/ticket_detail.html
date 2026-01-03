@@ -1,0 +1,152 @@
+<!-- templates/cinema/ticket_detail.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Билет #{{ ticket.id }} - Кинотеатр "Экран"{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h2 class="mb-0">КИНОТЕАТР "ЭКРАН"</h2>
+                <p class="mb-0">БИЛЕТ НА СЕАНС</p>
+            </div>
+            
+            <div class="card-body">
+                <!-- QR код (заглушка) -->
+                <div class="text-center mb-4">
+                    <div class="border d-inline-block p-3">
+                        <div style="width: 200px; height: 200px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center">
+                                <div class="fs-1">🎫</div>
+                                <small>QR код билета</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Информация о фильме -->
+                <div class="row mb-4">
+                    <div class="col-4 text-end">
+                        <strong>Фильм:</strong>
+                    </div>
+                    <div class="col-8">
+                        <h5>{{ ticket.session.movie.name }}</h5>
+                    </div>
+                </div>
+                
+                <!-- Информация о сеансе -->
+                <div class="row mb-2">
+                    <div class="col-4 text-end">
+                        <strong>Дата и время:</strong>
+                    </div>
+                    <div class="col-8">
+                        {{ ticket.session.date_session }} {{ ticket.session.start_time|time:"H:i" }}
+                    </div>
+                </div>
+                
+                <div class="row mb-2">
+                    <div class="col-4 text-end">
+                        <strong>Зал:</strong>
+                    </div>
+                    <div class="col-8">
+                        Зал {{ ticket.session.cinema_hall.id }} ({{ ticket.session.cinema_hall.hall_type.hall_type }})
+                    </div>
+                </div>
+                
+                <!-- Информация о месте -->
+                <div class="row mb-2">
+                    <div class="col-4 text-end">
+                        <strong>Место:</strong>
+                    </div>
+                    <div class="col-8">
+                        Ряд {{ ticket.seat.row }}, Место {{ ticket.seat.seat_in_row }}
+                    </div>
+                </div>
+                
+                <!-- Цена -->
+                <div class="row mb-4">
+                    <div class="col-4 text-end">
+                        <strong>Цена:</strong>
+                    </div>
+                    <div class="col-8">
+                        <h4 class="text-success">{{ ticket.session.price }} ₽</h4>
+                    </div>
+                </div>
+                
+                <!-- Дополнительная информация -->
+                <div class="row mb-4">
+                    <div class="col-4 text-end">
+                        <strong>Статус:</strong>
+                    </div>
+                    <div class="col-8">
+                        <span class="badge {% if ticket.status %}bg-success{% else %}bg-warning{% endif %} fs-6">
+                            {% if ticket.status %}ИСПОЛЬЗОВАН{% else %}АКТИВЕН{% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                {% if ticket.buy_date %}
+                <div class="row mb-2">
+                    <div class="col-4 text-end">
+                        <strong>Дата покупки:</strong>
+                    </div>
+                    <div class="col-8">
+                        {{ ticket.buy_date }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-4 text-end">
+                        <strong>Номер билета:</strong>
+                    </div>
+                    <div class="col-8">
+                        <code>#{{ ticket.id }}-{{ ticket.session.id }}-{{ ticket.seat.id }}</code>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Предупреждение -->
+                <div class="alert alert-warning">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Важная информация:</h6>
+                    <ul class="mb-0 small">
+                        <li>Билет необходимо предъявить на входе в зал</li>
+                        <li>Билет действителен только на указанный сеанс</li>
+                        <li>Возврат билетов возможен не позднее чем за 1 час до сеанса</li>
+                    </ul>
+                </div>
+                
+                <!-- Кнопки действий -->
+                <div class="text-center mt-4">
+                    <button onclick="window.print()" class="btn btn-primary me-2">
+                        <i class="bi bi-printer"></i> Распечатать
+                    </button>
+                    <a href="{% url 'main:my_tickets' %}" class="btn btn-outline-secondary">
+                        Назад к списку билетов
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-footer text-center text-muted small">
+                <p class="mb-0">Кинотеатр "Экран" • info@cinema.ru • тел. +7 (XXX) XXX-XX-XX</p>
+                <p class="mb-0">Билет сгенерирован: {% now "d.m.Y H:i" %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .navbar, .footer, .btn {
+        display: none !important;
+    }
+    .card {
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}
