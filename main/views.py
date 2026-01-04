@@ -16,16 +16,25 @@ def index(request):
     return render(request, 'main/index.html', context)
 
 def movie_list(request):
-    movies = Movie.objects.all().order_by('-rating', 'name')
+    movies = Movie.objects.all()
     genres = Genre.objects.all()
-    
+    age_ratings = AgeRating.objects.all()
     genre_filter = request.GET.get('genre')
     if genre_filter:
         movies = movies.filter(genres__id=genre_filter)
     
+    age_rating_filter = request.GET.get('age_rating')
+    if age_rating_filter:
+        movies = movies.filter(age_rating_id=age_rating_filter)
+    sort_by = request.GET.get('sort', 'name')
+    allowed_sorts = ['name', '-name', '-rating', '-release_year']
+    if sort_by not in allowed_sorts:
+        sort_by = 'name'
+    movies = movies.order_by(sort_by)
     context = {
         'movies': movies,
         'genres': genres,
+        'age_ratings':age_ratings,
     }
     return render(request, 'main/movie_list.html', context)
 
@@ -119,22 +128,29 @@ def ticket_detail(request, ticket_id):
     return render(request, 'main/ticket_detail.html', context)
 
 def admin_required(function):
-    return user_passes_test(lambda u: u.is_authenticated and u.role == 'admin')(function)
+    def wrap(request, *args, **kwargs):
+        if request.user.is_authenticated and (request.user.role == 'admin' or request.user.is_staff):
+            return function(request, *args, **kwargs)
+        else:
+            return redirect('main:index') 
+    return wrap
 
+@login_required
 @admin_required
 def admin_dashboard(request):
-    total_tickets = Ticket.objects.count()
-    sold_tickets = Ticket.objects.filter(status=True).count()
-    total_sessions = Session.objects.count()
-    upcoming_sessions = Session.objects.filter(date_session__gte=timezone.now().date()).count()
-    
-    recent_tickets = Ticket.objects.filter(status=True).order_by('-buy_date')[:10]
+    stats = {
+        'total_movies': Movie.objects.count(),
+        'total_sessions': Session.objects.count(),
+        'total_tickets': Ticket.objects.count(),
+        'total_users': CustomUser.objects.count(),
+        'total_halls': CinemaHall.objects.filter(available=True).count(),
+    }
+    recent_tickets = Ticket.objects.select_related(
+        'session', 'session__movie', 'client'
+    ).order_by('-buy_date', '-id')[:10]
     
     context = {
-        'total_tickets': total_tickets,
-        'sold_tickets': sold_tickets,
-        'total_sessions': total_sessions,
-        'upcoming_sessions': upcoming_sessions,
+        'stats': stats,
         'recent_tickets': recent_tickets,
     }
     return render(request, 'main/admin_dashboard.html', context)

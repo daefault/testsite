@@ -420,10 +420,5 @@ def main():
         print(f"\n❌ ОШИБКА: {e}")
         import traceback
         traceback.print_exc()
-        print("\n🔥 Попробуй сначала выполнить миграции:")
-        print("   python manage.py makemigrations")
-        print("   python manage.py migrate")
-        print("   Затем снова запусти fill_database.py")
-
 if __name__ == '__main__':
     main()
