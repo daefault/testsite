@@ -17,12 +17,12 @@
 <!-- Сейчас в кино -->
 <div class="row mb-5">
     <div class="col-12">
-        <h2 class="mb-4 border-bottom pb-2">Сейчас в кино</h2>
+        <h2 class="mb-4 border-bottom pb-2 text-light">Сейчас в кино</h2>
     </div>
     
     {% for movie in movies %}
     <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm bg-light">
             <img src="{{ movie.poster_url }}" 
                  class="card-img-top movie-poster" 
                  alt="{{ movie.name }}"
@@ -55,7 +55,7 @@
 <!-- Ближайшие сеансы -->
 <div class="row">
     <div class="col-12">
-        <h2 class="mb-4 border-bottom pb-2">Ближайшие сеансы</h2>
+        <h2 class="mb-4 border-bottom pb-2 text-light">Ближайшие сеансы</h2>
     </div>
     
     {% for session in upcoming_sessions %}
@@ -91,37 +91,4 @@
     </div>
     {% endfor %}
 </div>
-
-<!-- Статистика (только для админа) -->
-{% if user.role == 'admin' %}
-<div class="row mt-5">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Статистика</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <h3>{{ total_movies }}</h3>
-                        <p>Фильмов</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h3>{{ total_sessions }}</h3>
-                        <p>Сеансов</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h3>{{ total_tickets }}</h3>
-                        <p>Билетов продано</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h3>{{ total_users }}</h3>
-                        <p>Пользователей</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}

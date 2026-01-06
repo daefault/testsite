@@ -1,4 +1,10 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Выбор мест - {{ session.movie.name }}{% endblock %}
+
 {% block content %}
+
 <style>
     .seat-map-container {
         background: #f8f9fa;
@@ -7,7 +13,7 @@
         max-width: 100%;
         overflow-x: auto;
     }
-    
+
     .screen {
         width: 80%;
         height: 30px;
@@ -19,24 +25,24 @@
         line-height: 30px;
         font-size: 0.9rem;
         font-weight: bold;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         text-transform: uppercase;
         letter-spacing: 2px;
     }
-    
+
     .seats-grid {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 10px;
     }
-    
+
     .seat-row {
         display: flex;
         align-items: center;
         gap: 5px;
     }
-    
+
     .row-number {
         width: 30px;
         height: 30px;
@@ -49,7 +55,7 @@
         border-radius: 4px;
         margin-right: 10px;
     }
-    
+
     .seat {
         width: 40px;
         height: 40px;
@@ -64,22 +70,22 @@
         transition: all 0.2s;
         border: 2px solid transparent;
     }
-    
+
     .seat:hover {
         transform: scale(1.1);
     }
-    
+
     .seat-available {
         background: #28a745;
         color: white;
         border-color: #28a745;
     }
-    
+
     .seat-available:hover {
         background: #218838;
         border-color: #218838;
     }
-    
+
     .seat-taken {
         background: #dc3545;
         color: white;
@@ -87,20 +93,19 @@
         opacity: 0.7;
         border-color: #dc3545;
     }
-    
+
     .seat-selected {
         background: #ffc107;
         color: #000;
         border-color: #ffc107;
         box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
     }
-    
+
     .seat-selected:hover {
         background: #e0a800;
         border-color: #e0a800;
     }
-    
-    /* Легенда */
+
     .legend {
         display: flex;
         justify-content: center;
@@ -108,26 +113,25 @@
         margin-top: 30px;
         flex-wrap: wrap;
     }
-    
+
     .legend-item {
         display: flex;
         align-items: center;
         gap: 8px;
         font-size: 0.9rem;
     }
-    
+
     .legend-color {
         width: 20px;
         height: 20px;
         border-radius: 4px;
     }
-    
-    /* Проход между рядами */
+
     .aisle {
         width: 40px;
         height: 40px;
         margin: 0 3px;
-        visibility: hidden; /* Скрытый элемент для выравнивания */
+        visibility: hidden;
     }
 </style>
 
@@ -141,30 +145,30 @@
             <div class="card-body">
                 <h4>{{ session.movie.name }}</h4>
                 <hr>
-                
+
                 <p><strong>Дата и время:</strong><br>
-                   {{ session.date_session }} {{ session.start_time|time:"H:i" }}
+                    {{ session.date_session }} {{ session.start_time|time:"H:i" }}
                 </p>
-                
+
                 <p><strong>Зал:</strong><br>
-                   Зал {{ session.cinema_hall.id }} ({{ session.cinema_hall.hall_type.hall_type }})
+                    Зал {{ session.cinema_hall.id }} ({{ session.cinema_hall.hall_type.hall_type }})
                 </p>
-                
+
                 <p><strong>Длительность:</strong><br>
-                   {{ session.movie.duration }} минут
+                    {{ session.movie.duration }} минут
                 </p>
-                
+
                 <p><strong>Возрастное ограничение:</strong><br>
-                   {{ session.movie.age_rating.age_rating }}
+                    {{ session.movie.age_rating.age_rating }}
                 </p>
-                
+
                 <div class="alert alert-info mt-3">
                     <h5 class="alert-heading">Цена: {{ session.price }} ₽</h5>
                     <p class="mb-0">За одно место</p>
                 </div>
             </div>
         </div>
-        
+
         <!-- Корзина выбранных мест -->
         <div class="card mt-3" id="cart-section" style="display: none;">
             <div class="card-header bg-success text-white">
@@ -173,15 +177,19 @@
             <div class="card-body">
                 <div id="selected-seats-list"></div>
                 <div class="mt-3">
-                    <h5>Итого: <span id="total-price">0</span> ₽</h5>
+                    <h5>Итого: <span id="total-price-summary">0</span> ₽</h5>
                 </div>
-                <button id="confirm-booking" class="btn btn-success w-100 mt-3" disabled>
-                    Купить билеты
-                </button>
+                <form id="buy-tickets-form" method="post" action="{% url 'main:buy_multiple_tickets' session.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="selected_seats" id="selected-seats-input">
+                    <button type="submit" id="confirm-booking" class="btn btn-success w-100 mt-3" disabled>
+                        Купить выбранные билеты
+                    </button>
+                </form>
             </div>
         </div>
     </div>
-    
+
     <!-- Карта зала -->
     <div class="col-md-8">
         <div class="card">
@@ -191,49 +199,40 @@
             <div class="card-body">
                 <!-- Экран -->
                 <div class="text-center mb-4">
-                    <div class="screen">🚀 Экран 🚀</div>
+                    <div class="screen">Экран</div>
                 </div>
-                
-                <!-- Карта мест -->
+
+                <!-- КАРТА МЕСТ - ИСПРАВЛЕННЫЙ КОД -->
                 <div class="seat-map-container">
                     <div class="seats-grid" id="seat-map">
-                        {% for row in rows_range %}
+                        {% for row_data in seats_matrix %}
                         <div class="seat-row">
-                            <!-- Номер ряда -->
-                            <div class="row-number">{{ row }}</div>
-                            
-                            {% for seat_num in seats_range %}
-                                {% if row|stringformat:"s"|add:"_"|add:seat_num|stringformat:"s" in seats_dict %}
-                                    <!-- Занятое место -->
-                                    <div class="seat seat-taken"
-                                         data-seat-id="{{ row }}_{{ seat_num }}"
-                                         data-row="{{ row }}"
-                                         data-seat="{{ seat_num }}"
-                                         data-price="{{ session.price }}"
-                                         title="Занято">
-                                        {{ seat_num }}
-                                    </div>
-                                {% else %}
-                                    <!-- Свободное место -->
-                                    <div class="seat seat-available"
-                                         data-seat-id="{{ row }}_{{ seat_num }}"
-                                         data-row="{{ row }}"
-                                         data-seat="{{ seat_num }}"
-                                         data-price="{{ session.price }}"
-                                         title="Ряд {{ row }}, Место {{ seat_num }}">
-                                        {{ seat_num }}
-                                    </div>
-                                {% endif %}
-                                
-                                <!-- Добавляем проход после 5-го места (опционально) -->
-                                {% if forloop.counter == 5 %}
-                                    <div class="aisle"></div>
-                                {% endif %}
+                            <div class="row-number">{{ row_data.row_number }}</div>
+                            {% for seat in row_data.seats %}
+                            {% if seat.is_taken %}
+                    <div class="seat seat-taken"
+                         data-seat-key="{{ seat.seat_key }}"
+                         data-row="{{ seat.row }}"
+                         data-seat="{{ seat.number }}"
+                         data-price="{{ session.price }}"
+                         title="Ряд {{ seat.row }}, Место {{ seat.number }} - Занято">
+                        {{ seat.number }}
+                    </div>
+                {% else %}
+                    <div class="seat seat-available"
+                         data-seat-key="{{ seat.seat_key }}"
+                         data-row="{{ seat.row }}"
+                         data-seat="{{ seat.number }}"
+                         data-price="{{ session.price }}"
+                         title="Ряд {{ seat.row }}, Место {{ seat.number }}">
+                        {{ seat.number }}
+                    </div>
+                {% endif %}
                             {% endfor %}
                         </div>
                         {% endfor %}
                     </div>
-                    
+
                     <!-- Легенда -->
                     <div class="legend">
                         <div class="legend-item">
@@ -250,7 +249,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Статистика -->
                 <div class="row mt-4">
                     <div class="col-md-8">
@@ -274,163 +273,19 @@
                     <div class="col-md-4 text-end">
                         <div class="alert alert-warning">
                             <h5 class="mb-2">💰 Сумма:</h5>
-                            <h3 id="total-price">0 ₽</h3>
+                            <h3 id="total-price-display">0 ₽</h3>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Скрытые поля -->
+
                 <input type="hidden" id="session-id" value="{{ session.id }}">
                 <input type="hidden" id="price-per-seat" value="{{ session.price }}">
             </div>
         </div>
-        
-        <!-- Предупреждение -->
-        <div class="alert alert-info mt-3">
-            <h5><i class="bi bi-info-circle"></i> Как выбрать места:</h5>
-            <ul class="mb-0">
-                <li>Кликните на свободное место (зелёное), чтобы выбрать его</li>
-                <li>Кликните на выбранное место (жёлтое), чтобы отменить выбор</li>
-                <li>Занятые места (красные) выбрать нельзя</li>
-                <li>После выбора мест нажмите "Купить билеты" в корзине справа</li>
-            </ul>
-        </div>
+
+
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const seats = document.querySelectorAll('.seat-available');
-    const cartSection = document.getElementById('cart-section');
-    const selectedSeatsList = document.getElementById('selected-seats-list');
-    const totalPriceElement = document.getElementById('total-price');
-    const selectedCountElement = document.getElementById('selected-count');
-    const availableSeatsElement = document.getElementById('available-seats');
-    const confirmButton = document.getElementById('confirm-booking');
-    const pricePerSeat = parseFloat(document.getElementById('price-per-seat').value);
-    const sessionId = document.getElementById('session-id').value;
-    
-    let selectedSeats = [];
-    let totalPrice = 0;
-    
-    seats.forEach(seat => {
-        seat.addEventListener('click', function() {
-            const seatId = this.dataset.seatId;
-            const row = this.dataset.row;
-            const seatNum = this.dataset.seat;
-            
-            if (this.classList.contains('seat-selected')) {
-                // Удаляем из выбранных
-                this.classList.remove('seat-selected');
-                this.classList.add('seat-available');
-                selectedSeats = selectedSeats.filter(s => s.id !== seatId);
-            } else {
-                // Добавляем в выбранные
-                this.classList.remove('seat-available');
-                this.classList.add('seat-selected');
-                selectedSeats.push({
-                    id: seatId,
-                    row: row,
-                    seat: seatNum,
-                    price: pricePerSeat
-                });
-            }
-            
-            updateCart();
-        });
-    });
-    
-    function updateCart() {
-        // Показываем/скрываем корзину
-        if (selectedSeats.length > 0) {
-            cartSection.style.display = 'block';
-        } else {
-            cartSection.style.display = 'none';
-        }
-        
-        // Обновляем список мест
-        selectedSeatsList.innerHTML = '';
-        totalPrice = 0;
-        
-        selectedSeats.forEach(seat => {
-            totalPrice += seat.price;
-            
-            const seatElement = document.createElement('div');
-            seatElement.className = 'd-flex justify-content-between align-items-center mb-2 p-2 border rounded';
-            seatElement.innerHTML = `
-                <div>
-                    <i class="bi bi-ticket-perforated me-2"></i>
-                    <strong>Ряд ${seat.row}, Место ${seat.seat}</strong>
-                </div>
-                <div>
-                    <span class="text-success fw-bold">${seat.price} ₽</span>
-                    <button class="btn btn-sm btn-outline-danger ms-2 remove-seat" data-seat-id="${seat.id}">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-            `;
-            selectedSeatsList.appendChild(seatElement);
-        });
-        
-        // Обновляем итоговую сумму
-        totalPriceElement.textContent = totalPrice.toFixed(2) + ' ₽';
-        selectedCountElement.textContent = selectedSeats.length;
-        
-        // Обновляем количество свободных мест
-        const totalAvailableSeats = parseInt(availableSeatsElement.textContent);
-        const currentAvailable = totalAvailableSeats - selectedSeats.length;
-        availableSeatsElement.textContent = Math.max(0, currentAvailable);
-        
-        // Активируем/деактивируем кнопку
-        confirmButton.disabled = selectedSeats.length === 0;
-        
-        // Добавляем обработчики для кнопок удаления
-        document.querySelectorAll('.remove-seat').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const seatId = this.dataset.seatId;
-                const seatElement = document.querySelector(`[data-seat-id="${seatId}"]`);
-                
-                if (seatElement) {
-                    seatElement.classList.remove('seat-selected');
-                    seatElement.classList.add('seat-available');
-                }
-                
-                selectedSeats = selectedSeats.filter(s => s.id !== seatId);
-                updateCart();
-            });
-        });
-    }
-    
-    // Обработка покупки
-    confirmButton.addEventListener('click', function() {
-        if (selectedSeats.length === 0) {
-            alert('Выберите хотя бы одно место!');
-            return;
-        }
-        
-        const seatsList = selectedSeats.map(s => `Ряд ${s.row}, Место ${s.seat}`).join('\n');
-        const confirmBuy = confirm(
-            `Подтвердить покупку ${selectedSeats.length} билетов?\n\n` +
-            `Выбранные места:\n${seatsList}\n\n` +
-            `Общая сумма: ${totalPrice} ₽\n\n` +
-            `Нажмите ОК для подтверждения`
-        );
-        
-        if (confirmBuy) {
-            // Временное решение - показываем сообщение
-            alert(`🎟️ Билеты успешно куплены!\n\n` +
-                  `Номер сеанса: ${sessionId}\n` +
-                  `Количество билетов: ${selectedSeats.length}\n` +
-                  `Сумма: ${totalPrice} ₽\n\n` +
-                  `Билеты сохранены в вашем профиле.`);
-            
-            // В реальном проекте здесь будет AJAX запрос
-            // Для теста перезагружаем страницу
-            setTimeout(() => {
-                window.location.href = "{% url 'main:my_tickets' %}";
-            }, 1500);
-        }
-    });
-});
-</script>
+<script src="{%static 'js/session_details.js'%}"></script>
 {% endblock %}

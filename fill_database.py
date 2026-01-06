@@ -1,21 +1,9 @@
-# fill_database.py
-"""
-Скрипт для заполнения базы данных тестовыми данными.
-Просто положи этот файл в корень проекта (рядом с manage.py) и запусти:
-python fill_database.py
-"""
-
 import os
-import sys
 import django
 import random
 from datetime import datetime, timedelta
-
-# Настройка Django (ОБЯЗАТЕЛЬНО!)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cinema.settings')
 django.setup()
-
-# Теперь импортируем модели
 from main.models import *
 from users.models import CustomUser
 
@@ -51,7 +39,7 @@ def create_genres():
     genres = [
         'Фантастика', 'Боевик', 'Драма', 'Комедия', 
         'Триллер', 'Приключения', 'Ужасы', 'Мелодрама',
-        'Мультфильм'  # Добавил этот жанр, т.к. он используется в данных
+        'Мультфильм'
     ]
     
     for g in genres:
@@ -60,13 +48,12 @@ def create_genres():
     return Genre.objects.all()
 
 def create_cinema_halls():
-    """Создаем кинозалы"""
+    """Создаем кинозалы - ОПТИМИЗИРОВАННОЕ КОЛИЧЕСТВО"""
     halls = [
-        {'type': '2D', 'rows': 10, 'seats': 15},
-        {'type': '3D', 'rows': 8, 'seats': 12},
-        {'type': 'IMAX', 'rows': 6, 'seats': 10},
-        {'type': '2D', 'rows': 12, 'seats': 18},
-        {'type': 'VIP', 'rows': 4, 'seats': 6},
+        {'type': '2D', 'rows': 8, 'seats': 10},    
+        {'type': '3D', 'rows': 6, 'seats': 8},     
+        {'type': 'IMAX', 'rows': 4, 'seats': 6},   
+        {'type': 'VIP', 'rows': 3, 'seats': 4},   
     ]
     
     created = 0
@@ -85,12 +72,7 @@ def create_cinema_halls():
     return CinemaHall.objects.all()
 
 def create_movies():
-    """Создаем фильмы"""
-    # Сначала убедимся, что все жанры существуют
-    genre_names = ['Фантастика', 'Боевик', 'Драма', 'Мелодрама', 'Мультфильм']
-    for genre_name in genre_names:
-        Genre.objects.get_or_create(genre=genre_name)
-    
+    """Создаем фильмы - 10 фильмов для демонстрации"""
     movies = [
         {
             'name': 'Интерстеллар',
@@ -137,17 +119,60 @@ def create_movies():
             'genres': ['Драма', 'Мелодрама'],
             'desc': 'История любви на тонущем корабле.'
         },
+        {
+            'name': 'Властелин колец: Братство кольца',
+            'duration': 178,
+            'year': 2001,
+            'rating': 8.8,
+            'age': '12+',
+            'genres': ['Фэнтези', 'Приключения'],
+            'desc': 'Эпическое фэнтези о кольце всевластия.'
+        },
+        {
+            'name': 'Криминальное чтиво',
+            'duration': 154,
+            'year': 1994,
+            'rating': 8.9,
+            'age': '18+',
+            'genres': ['Криминал', 'Драма'],
+            'desc': 'Переплетенные истории гангстеров.'
+        },
+        {
+            'name': 'Один дома',
+            'duration': 103,
+            'year': 1990,
+            'rating': 8.2,
+            'age': '6+',
+            'genres': ['Комедия'],
+            'desc': 'Мальчик защищает дом от грабителей.'
+        },
+        {
+            'name': 'Холодное сердце',
+            'duration': 102,
+            'year': 2013,
+            'rating': 7.4,
+            'age': '0+',
+            'genres': ['Мультфильм', 'Фэнтези'],
+            'desc': 'История Эльзы и Анны.'
+        },
+        {
+            'name': 'Дюна',
+            'duration': 155,
+            'year': 2021,
+            'rating': 8.0,
+            'age': '12+',
+            'genres': ['Фантастика', 'Драма'],
+            'desc': 'Эпическая сага о пустынной планете.'
+        },
     ]
     
     created = 0
     for m in movies:
-        # Получаем или создаем возрастной рейтинг
         age_rating, _ = AgeRating.objects.get_or_create(
             age_rating=m['age'],
-            defaults={'min_age': 12 if m['age'] == '12+' else 0 if m['age'] == '0+' else 16}
+            defaults={'min_age': 12 if m['age'] == '12+' else 0 if m['age'] == '0+' else 16 if m['age'] == '16+' else 18}
         )
         
-        # Создаем фильм
         movie, was_created = Movie.objects.get_or_create(
             name=m['name'],
             defaults={
@@ -160,7 +185,6 @@ def create_movies():
         )
         
         if was_created:
-            # Добавляем жанры к фильму
             for genre_name in m['genres']:
                 genre, _ = Genre.objects.get_or_create(genre=genre_name)
                 MovieGenre.objects.get_or_create(movie=movie, genre=genre)
@@ -170,8 +194,7 @@ def create_movies():
     return Movie.objects.all()
 
 def create_users():
-    """Создаем пользователей"""
-    # Суперпользователь (админ Django)
+    """Создаем пользователей - достаточно для тестирования"""
     if not CustomUser.objects.filter(username='admin').exists():
         CustomUser.objects.create_superuser(
             username='admin',
@@ -179,14 +202,12 @@ def create_users():
             password='admin123'
         )
         print("✅ Создан суперпользователь: admin / admin123")
-    else:
-        print("ℹ️  Суперпользователь admin уже существует")
     
-    # Обычные пользователи
     users = [
         {'username': 'user1', 'email': 'user1@mail.ru', 'password': '123456', 'role': 'user'},
         {'username': 'user2', 'email': 'user2@mail.ru', 'password': '123456', 'role': 'user'},
         {'username': 'manager', 'email': 'manager@cinema.ru', 'password': 'manager123', 'role': 'admin'},
+        {'username': 'user3', 'email': 'user3@mail.ru', 'password': '123456', 'role': 'user'},
     ]
     
     created = 0
@@ -209,14 +230,11 @@ def create_seats():
     total_seats = 0
     
     for hall in halls:
-        # Проверяем, есть ли уже места
         existing_seats = Seat.objects.filter(cinema_hall=hall).count()
         if existing_seats > 0:
-            print(f"ℹ️  В зале {hall.id} уже есть {existing_seats} мест, пропускаем")
             total_seats += existing_seats
             continue
         
-        # Создаем новые места
         seats = []
         for row in range(1, hall.row_number + 1):
             for seat_num in range(1, hall.seat_number_in_row + 1):
@@ -226,138 +244,214 @@ def create_seats():
                     seat_in_row=seat_num
                 ))
         
-        # Используем bulk_create для эффективности
         if seats:
             Seat.objects.bulk_create(seats)
             total_seats += len(seats)
-            print(f"✅ В зале {hall.id} создано {len(seats)} мест")
     
-    print(f"✅ Всего мест в базе: {total_seats}")
+    print(f"✅ Создано мест: {total_seats}")
     return total_seats
 
 def create_sessions():
-    """Создаем сеансы"""
-    movies = Movie.objects.all()
-    halls = CinemaHall.objects.filter(available=True)
+    """Создаем сеансы на декабрь 2025 и февраль 2026"""
+    movies = list(Movie.objects.all())
+    halls = list(CinemaHall.objects.filter(available=True))
     
-    if not movies.exists():
-        print("❌ Нет фильмов для создания сеансов")
-        return 0
-    if not halls.exists():
-        print("❌ Нет доступных залов для создания сеансов")
+    if not movies or not halls:
+        print("❌ Нет данных для создания сеансов")
         return 0
     
-    # Сеансы на сегодня и завтра
-    today = datetime.now().date()
-    tomorrow = today + timedelta(days=1)
-    
-    sessions_data = [
-        {'date': today, 'time': '10:00', 'price': 300},
-        {'date': today, 'time': '13:00', 'price': 350},
-        {'date': today, 'time': '16:00', 'price': 400},
-        {'date': today, 'time': '19:00', 'price': 450},
-        {'date': today, 'time': '22:00', 'price': 500},
-        {'date': tomorrow, 'time': '11:00', 'price': 300},
-        {'date': tomorrow, 'time': '14:00', 'price': 350},
-        {'date': tomorrow, 'time': '17:00', 'price': 400},
-        {'date': tomorrow, 'time': '20:00', 'price': 450},
-        {'date': tomorrow, 'time': '23:00', 'price': 500},
+    # Времена сеансов
+    session_times = [
+        '10:00', '13:00', '16:00', '19:00', '22:00'
     ]
     
     created = 0
-    for session_data in sessions_data:
-        movie = random.choice(list(movies))
-        hall = random.choice(list(halls))
+    
+    # Создаем сеансы на декабрь 2025 (прошедшие) - ТОЛЬКО 7 ДНЕЙ
+    december_2025_start = datetime(2025, 12, 1).date()
+    
+    for day_offset in range(0, 7):  # Только 7 дней декабря
+        date = december_2025_start + timedelta(days=day_offset)
         
-        # Проверяем, нет ли уже такого сеанса
-        existing = Session.objects.filter(
+        # Для каждого дня создаем по 1 сеансу в рандомном зале
+        hall = random.choice(halls)
+        time = random.choice(session_times)
+        movie = random.choice(movies)
+        
+        # Простая логика цены
+        price = 300
+        if hall.hall_type.hall_type == '3D':
+            price = 400
+        elif hall.hall_type.hall_type == 'IMAX':
+            price = 500
+        elif hall.hall_type.hall_type == 'VIP':
+            price = 600
+        
+        # Корректировка по времени
+        hour = int(time.split(':')[0])
+        if hour <= 12:
+            price = int(price * 0.9)
+        elif hour >= 22:
+            price = int(price * 0.85)
+        
+        Session.objects.create(
             cinema_hall=hall,
             movie=movie,
-            date_session=session_data['date'],
-            start_time=session_data['time']
-        ).exists()
+            date_session=date,
+            start_time=time,
+            price=price
+        )
+        created += 1
+    
+    # Создаем сеансы на февраль 2026 (будущие) - ТОЛЬКО 7 ДНЕЙ
+    february_2026_start = datetime(2026, 2, 1).date()
+    
+    for day_offset in range(0, 7):  # Только 7 дней февраля
+        date = february_2026_start + timedelta(days=day_offset)
         
-        if not existing:
-            Session.objects.create(
-                cinema_hall=hall,
-                movie=movie,
-                date_session=session_data['date'],
-                start_time=session_data['time'],
-                price=session_data['price']
-            )
-            created += 1
+        # Для каждого дня создаем по 1 сеансу в рандомном зале
+        hall = random.choice(halls)
+        time = random.choice(session_times)
+        movie = random.choice(movies)
+        
+        # Простая логика цены
+        price = 300
+        if hall.hall_type.hall_type == '3D':
+            price = 400
+        elif hall.hall_type.hall_type == 'IMAX':
+            price = 500
+        elif hall.hall_type.hall_type == 'VIP':
+            price = 600
+        
+        # Корректировка по времени
+        hour = int(time.split(':')[0])
+        if hour <= 12:
+            price = int(price * 0.9)
+        elif hour >= 22:
+            price = int(price * 0.85)
+        
+        Session.objects.create(
+            cinema_hall=hall,
+            movie=movie,
+            date_session=date,
+            start_time=time,
+            price=price
+        )
+        created += 1
     
     print(f"✅ Создано сеансов: {created}")
+    print(f"📅 Сеансы созданы на декабрь 2025 (7 дней) и февраль 2026 (7 дней)")
     return created
 
 def create_tickets():
-    """Создаем билеты"""
-    sessions = Session.objects.all()
-    users = CustomUser.objects.filter(role='user')
+    """Создаем билеты - МАЛЕНЬКОЕ КОЛИЧЕСТВО для пользователей"""
+    users = list(CustomUser.objects.filter(role='user'))
     
-    if not sessions.exists():
-        print("❌ Нет сеансов для создания билетов")
+    if not users:
+        print("❌ Нет пользователей для создания билетов")
         return 0
     
+    # Распределим билеты между пользователями
+    # user1 - 10 билетов (6 использованных, 4 активных)
+    # user2 - 8 билетов (4 использованных, 4 активных)
+    # user3 - 6 билетов (3 использованных, 3 активных)
+    
+    users_with_tickets = [
+        {'user': users[0], 'total': 10, 'used': 6, 'active': 4},  # user1
+        {'user': users[1], 'total': 8, 'used': 4, 'active': 4},   # user2
+        {'user': users[2], 'total': 6, 'used': 3, 'active': 3},   # user3
+    ]
+    
     created = 0
-    for session in sessions:
-        # Берем места из этого зала
-        seats = Seat.objects.filter(cinema_hall=session.cinema_hall)
-        if not seats.exists():
-            print(f"ℹ️  В зале {session.cinema_hall.id} нет мест, пропускаем")
-            continue
+    
+    # Собираем все сеансы для создания билетов
+    december_sessions = list(Session.objects.filter(date_session__year=2025, date_session__month=12))
+    february_sessions = list(Session.objects.filter(date_session__year=2026, date_session__month=2))
+    
+    for user_data in users_with_tickets:
+        user = user_data['user']
         
-        # Проверяем, сколько билетов уже есть на этот сеанс
-        existing_tickets = Ticket.objects.filter(session=session).count()
-        
-        # Если уже много билетов, пропускаем
-        if existing_tickets >= len(seats) * 0.5:  # 50% мест уже занято
-            continue
-        
-        # Создаем 2-4 билета на сеанс
-        num_tickets = random.randint(2, 4)
-        available_seats = list(seats.exclude(
-            id__in=Ticket.objects.filter(session=session).values_list('seat_id', flat=True)
-        ))
-        
-        if not available_seats:
-            continue
+        # Создаем использованные билеты (на декабрь 2025)
+        for i in range(user_data['used']):
+            if not december_sessions:
+                continue
+                
+            session = random.choice(december_sessions)
+            seats = list(Seat.objects.filter(cinema_hall=session.cinema_hall))
             
-        selected_seats = random.sample(
-            available_seats, 
-            min(num_tickets, len(available_seats))
-        )
-        
-        for seat in selected_seats:
-            # 70% билетов с пользователем, 30% без
-            user = random.choice(list(users)) if random.random() < 0.7 and users.exists() else None
+            if not seats:
+                continue
+            
+            # Ищем свободное место
+            booked_seat_ids = Ticket.objects.filter(session=session).values_list('seat_id', flat=True)
+            available_seats = [s for s in seats if s.id not in booked_seat_ids]
+            
+            if not available_seats:
+                continue
+            
+            seat = random.choice(available_seats)
             
             Ticket.objects.create(
                 session=session,
                 seat=seat,
                 client=user,
-                status=True,  # Продан
-                buy_date=session.date_session - timedelta(days=random.randint(0, 2))
+                status=True,  # Использован
+                buy_date=session.date_session - timedelta(days=random.randint(1, 14))
             )
             created += 1
+        
+        # Создаем активные билеты (на февраль 2026)
+        for i in range(user_data['active']):
+            if not february_sessions:
+                continue
+                
+            session = random.choice(february_sessions)
+            seats = list(Seat.objects.filter(cinema_hall=session.cinema_hall))
+            
+            if not seats:
+                continue
+            
+            # Ищем свободное место
+            booked_seat_ids = Ticket.objects.filter(session=session).values_list('seat_id', flat=True)
+            available_seats = [s for s in seats if s.id not in booked_seat_ids]
+            
+            if not available_seats:
+                continue
+            
+            seat = random.choice(available_seats)
+            
+            Ticket.objects.create(
+                session=session,
+                seat=seat,
+                client=user,
+                status=False,  # Активен (не использован)
+                buy_date=session.date_session - timedelta(days=random.randint(0, 7))
+            )
+            created += 1
+        
+        print(f"   • {user.username}: {user_data['total']} билетов ({user_data['used']} использованных, {user_data['active']} активных)")
     
     print(f"✅ Создано билетов: {created}")
+    print(f"   • Всего у пользователей: {created} билетов")
+    print(f"   • На декабрь 2025: {Ticket.objects.filter(session__date_session__year=2025, session__date_session__month=12).count()}")
+    print(f"   • На февраль 2026: {Ticket.objects.filter(session__date_session__year=2026, session__date_session__month=2).count()}")
+    
     return created
 
 def main():
-    """Основная функция - запускает всё"""
+    """Основная функция"""
     print("=" * 50)
-    print("ЗАПОЛНЕНИЕ БАЗЫ ДАННЫХ КИНОТЕАТРА")
+    print("🎬 ЗАПОЛНЕНИЕ БАЗЫ ДАННЫХ КИНОТЕАТРА")
+    print("   (Версия с малым количеством билетов)")
     print("=" * 50)
     
     try:
-        # Спрашиваем, нужно ли очистить старые данные
-        print("\nХочешь очистить старые данные перед заполнением?")
-        print("1 - Да, очистить всё")
-        print("2 - Нет, добавить к существующим")
+        print("\n⚙️  Настройка заполнения базы данных:")
+        print("1 - Очистить всё и заполнить заново")
+        print("2 - Добавить к существующим данным")
         print("3 - Отмена")
         
-        choice = input("Твой выбор (1/2/3): ").strip()
+        choice = input("\nТвой выбор (1/2/3): ").strip()
         
         if choice == '3':
             print("❌ Отменено")
@@ -365,7 +459,6 @@ def main():
         
         if choice == '1':
             print("\n🧹 Очистка старых данных...")
-            # Удаляем в правильном порядке из-за внешних ключей
             Ticket.objects.all().delete()
             Session.objects.all().delete()
             Seat.objects.all().delete()
@@ -375,50 +468,65 @@ def main():
             AgeRating.objects.all().delete()
             HallType.objects.all().delete()
             Genre.objects.all().delete()
-            # Не удаляем пользователей, чтобы не потерять админа
+            CustomUser.objects.filter(is_superuser=False).delete()
             print("✅ Старые данные удалены")
         
-        print("\n🚀 Начинаем создание данных...")
+        print("\n🚀 Создание данных...")
+        print("-" * 50)
         
-        # Создаем данные по порядку (важен порядок!)
         create_age_ratings()
         create_hall_types()
-        create_genres()  # Жанры должны быть созданы до фильмов!
+        create_genres()
         create_cinema_halls()
-        create_movies()  # Теперь жанры уже существуют
+        create_movies()
         create_users()
         create_seats()
         create_sessions()
         create_tickets()
         
         print("\n" + "=" * 50)
-        print("✅ ВСЁ ГОТОВО!")
+        print("✅ ГОТОВО! Все функции доступны для тестирования")
         print("=" * 50)
         
-        # Показываем итоги
-        print(f"\n📊 Создано всего:")
-        print(f"   • Фильмов: {Movie.objects.count()}")
-        print(f"   • Кинозалов: {CinemaHall.objects.count()}")
-        print(f"   • Сеансов: {Session.objects.count()}")
-        print(f"   • Билетов: {Ticket.objects.count()}")
-        print(f"   • Пользователей: {CustomUser.objects.count()}")
+        # Краткая статистика
+        print(f"\n📊 СТАТИСТИКА:")
+        print(f"   • Фильмы: {Movie.objects.count()}")
+        print(f"   • Кинозалы: {CinemaHall.objects.count()}")
+        print(f"   • Сеансы: {Session.objects.count()}")
+        print(f"   • Билеты: {Ticket.objects.count()}")
+        print(f"   • Пользователи: {CustomUser.objects.count()}")
         
-        print(f"\n🔑 Доступные логины:")
-        print(f"   • Админ Django: admin / admin123")
-        print(f"   • Менеджер кинотеатра: manager / manager123")
-        print(f"   • Обычный пользователь: user1 / 123456")
-        print(f"   • Обычный пользователь: user2 / 123456")
+        # Статистика по билетам пользователей
+        print(f"\n🎫 БИЛЕТЫ ПОЛЬЗОВАТЕЛЕЙ:")
+        users = CustomUser.objects.filter(role='user')
+        for user in users:
+            tickets = Ticket.objects.filter(client=user)
+            used = tickets.filter(status=True).count()
+            active = tickets.filter(status=False).count()
+            print(f"   • {user.username}: {tickets.count()} билетов ({used} использованных, {active} активных)")
         
-        print(f"\n🎬 Для входа в админку Django:")
-        print(f"   Перейди по адресу: http://127.0.0.1:8000/admin/")
-        print(f"   Логин: admin")
-        print(f"   Пароль: admin123")
+        print(f"\n🔑 ДОСТУПНЫЕ АККАУНТЫ:")
+        print(f"   • Админ: admin / admin123")
+        print(f"   • Менеджер: manager / manager123")
+        print(f"   • Пользователи:")
+        print(f"       - user1 / 123456 (10 билетов)")
+        print(f"       - user2 / 123456 (8 билетов)")
+        print(f"       - user3 / 123456 (6 билетов)")
+        
+        print(f"\n📋 Для тестирования:")
+        print(f"   1. Войдите как user1, user2 или user3")
+        print(f"   2. На странице 'Мои билеты' увидите свои билеты")
+        print(f"   3. Билеты на февраль 2026 - активные")
+        print(f"   4. Билеты на декабрь 2025 - использованные")
         
         print("\n" + "=" * 50)
         
+    except KeyboardInterrupt:
+        print("\n\n❌ Прервано пользователем")
     except Exception as e:
         print(f"\n❌ ОШИБКА: {e}")
         import traceback
         traceback.print_exc()
+
 if __name__ == '__main__':
     main()
