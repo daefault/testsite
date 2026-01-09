@@ -1,11 +1,9 @@
-<!-- templates/cinema/index.html -->
 {% extends 'main/base.html' %}
 {% load static %}
 
 {% block title %}Главная - Кинотеатр "Экран"{% endblock %}
 
 {% block content %}
-<!-- Герой-секция -->
 <div class="hero-section mb-5 text-center text-white py-5 rounded" >
     <h1 class="display-4 fw-bold">Добро пожаловать в кинотеатр "Экран"</h1>
     <p class="lead">Лучшие фильмы в комфортных залах</p>
@@ -14,7 +12,6 @@
     </a>
 </div>
 
-<!-- Сейчас в кино -->
 <div class="row mb-5">
     <div class="col-12">
         <h2 class="mb-4 border-bottom pb-2 text-light">Сейчас в кино</h2>
@@ -52,7 +49,6 @@
     {% endfor %}
 </div>
 
-<!-- Ближайшие сеансы -->
 <div class="row">
     <div class="col-12">
         <h2 class="mb-4 border-bottom pb-2 text-light">Ближайшие сеансы</h2>

@@ -1,12 +1,10 @@
 {% extends 'main/base.html' %}
 {% load static %}
 
-{% block title %}Расписание сеансов - Кинотеатр "Экран"{% endblock %}
+{% block title %}Расписание сеансов{% endblock %}
 
 {% block content %}
 <h1 class="mb-4">Расписание сеансов</h1>
-
-<!-- Фильтры -->
 <div class="card mb-4">
     <div class="card-body">
         <form method="get" class="row g-3" id="filter-form">
@@ -58,7 +56,6 @@
 </div>
 
 
-<!-- Расписание по дням -->
 {% if sessions_by_date %}
     {% for date_str, sessions in sessions_by_date.items %}
     <div class="card mb-4">

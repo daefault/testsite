@@ -92,7 +92,6 @@ def session_detail(request, session_id):
                 t.seat.row == row and t.seat.seat_in_row == seat_num 
                 for t in tickets
             )
-            # ВАЖНО: Добавляем seat_key в формате "ряд_место"
             seat_key = f"{row}_{seat_num}"
             
             row_seats.append({
@@ -100,7 +99,7 @@ def session_detail(request, session_id):
                 'is_taken': is_taken,
                 'row': row,
                 'seat_num': seat_num,
-                'seat_key': seat_key  # ДОБАВЛЕНО ЭТО!
+                'seat_key': seat_key 
             })
         seats_matrix.append({
             'row_number': row,
@@ -164,62 +163,34 @@ def admin_dashboard(request):
 
 @login_required
 def buy_multiple_tickets(request, session_id):
-    """Покупка билетов для МАТРИЧНОЙ системы"""
-    print("🎫 ПОКУПКА БИЛЕТОВ (МАТРИЦА)")
-    print("🔍 Пользователь:", request.user.username)
-    print("🔍 Метод запроса:", request.method)
     
     if request.method == 'POST':
         session_obj = get_object_or_404(Session, id=session_id)
-        print(f"📽️ Сеанс: {session_obj.movie.name}")
-        print(f"🏛️ Зал ID: {session_obj.cinema_hall.id}")
-        
-        # Получаем данные
         selected_seats_json = request.POST.get('selected_seats', '[]')
-        print(f"📦 Получен JSON строка: {selected_seats_json}")
-        print(f"📦 Тип данных: {type(selected_seats_json)}")
-        print("🔍 Все POST данные:", dict(request.POST))
         
         try:
-            # Убираем возможные лишние кавычки и пробелы
             selected_seats_json = selected_seats_json.strip()
             
-            # Если строка начинается и заканчивается одинарными кавычками, убираем их
             if selected_seats_json.startswith("'") and selected_seats_json.endswith("'"):
                 selected_seats_json = selected_seats_json[1:-1]
                 print(f"📦 Убрали одинарные кавычки: {selected_seats_json}")
             
-            # Декодируем JSON
             seat_keys = json.loads(selected_seats_json)
-            print(f"🔑 Места из JSON: {seat_keys}")
-            print(f"🔑 Тип: {type(seat_keys)}")
-            print(f"🔑 Количество мест: {len(seat_keys)}")
-            
-            # Фильтруем None, null и пустые значения
             valid_seat_keys = []
             for key in seat_keys:
                 if key is not None and key != 'null' and key != '':
                     valid_seat_keys.append(key)
             
-            print(f"🔑 После фильтрации: {valid_seat_keys}")
-            
             if not valid_seat_keys:
-                print("❌ Нет мест для покупки после фильтрации")
                 return redirect('main:session_detail', session_id=session_id)
             
             created_tickets = []
             
             for i, seat_key in enumerate(valid_seat_keys):
-                print(f"\n🪑 [{i+1}] Обрабатываем ключ: '{seat_key}'")
-                
-                # Проверяем, что ключ - строка
                 if not isinstance(seat_key, str):
-                    print(f"   ❌ Ключ не строка: {type(seat_key)}")
                     continue
                 
-                # Ключ должен быть в формате "ряд_место"
                 if '_' not in seat_key:
-                    print(f"   ❌ Некорректный формат, нет '_'")
                     continue
                 
                 try:
@@ -229,7 +200,6 @@ def buy_multiple_tickets(request, session_id):
                     
                     print(f"   📍 Ряд: {row}, Место: {seat_num}")
                     
-                    # Ищем место в зале этого сеанса
                     seats = Seat.objects.filter(
                         cinema_hall=session_obj.cinema_hall,
                         row=row,
@@ -237,26 +207,16 @@ def buy_multiple_tickets(request, session_id):
                     )
                     
                     if not seats.exists():
-                        print(f"   ❌ Место не найдено в зале {session_obj.cinema_hall.id}")
-                        print(f"   🔍 Ищем: row={row}, seat_in_row={seat_num}")
-                        
-                        # Создаем место, если его нет
                         seat = Seat.objects.create(
                             cinema_hall=session_obj.cinema_hall,
                             row=row,
                             seat_in_row=seat_num
                         )
-                        print(f"   ✅ Создано новое место (ID: {seat.id})")
                     else:
                         seat = seats.first()
-                        print(f"   ✅ Место найдено (ID: {seat.id})")
                     
-                    # Проверяем не занято ли
                     if Ticket.objects.filter(session=session_obj, seat=seat).exists():
-                        print(f"   ⚠️ Место уже занято")
                         continue
-                    
-                    # Создаем билет
                     ticket = Ticket.objects.create(
                         session=session_obj,
                         seat=seat,
@@ -265,7 +225,6 @@ def buy_multiple_tickets(request, session_id):
                         buy_date=timezone.now().date()
                     )
                     created_tickets.append(ticket)
-                    print(f"   🎫 Билет создан (ID: {ticket.id})")
                     
                 except ValueError as e:
                     print(f"   ❌ Ошибка преобразования: {e}")
@@ -274,7 +233,6 @@ def buy_multiple_tickets(request, session_id):
                     import traceback
                     traceback.print_exc()
             
-            print(f"\n📊 ИТОГО: создано {len(created_tickets)} билетов")
             
             if created_tickets:
                 return redirect('main:my_tickets')
@@ -282,9 +240,6 @@ def buy_multiple_tickets(request, session_id):
                 return redirect('main:session_detail', session_id=session_id)
                 
         except json.JSONDecodeError as e:
-            print(f"❌ Ошибка JSON: {e}")
-            print(f"❌ Ошибочная строка: {selected_seats_json}")
             return redirect('main:session_detail', session_id=session_id)
     
-    print("❌ Не POST запрос")
     return redirect('main:session_detail', session_id=session_id)

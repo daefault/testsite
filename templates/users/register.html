@@ -1,8 +1,7 @@
-<!-- templates/users/register.html -->
 {% extends 'main/base.html' %}
 {% load static %}
 
-{% block title %}Регистрация - Кинотеатр "Экран"{% endblock %}
+{% block title %}Регистрация{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/auth.css' %}">
@@ -107,13 +106,6 @@
                 </div>
             </div>
             
-            <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="terms" required>
-                <label class="form-check-label" for="terms">
-                    Я согласен с <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">условиями использования</a>
-                </label>
-            </div>
-            
             <button type="submit" class="btn btn-primary btn-submit">
                 Зарегистрироваться
             </button>
@@ -125,21 +117,4 @@
     </div>
 </div>
 
-<!-- Модальное окно с условиями -->
-<div class="modal fade" id="termsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Условия использования</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Текст условий использования сервиса...</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
